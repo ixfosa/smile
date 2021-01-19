@@ -1,0 +1,51 @@
+
+<!-- 
+    “script” 标签
+    JavaScript 程序可以在 <script> 标签的帮助下插入到 HTML 
+    <script> 标签中包裹了 JavaScript 代码，当浏览器遇到 <script> 标签，代码会自动运行。
+
+
+    外部脚本
+    如果你有大量的 JavaScript 代码，我们可以将它放入一个单独的文件。
+    脚本文件可以通过 src 特性（attribute）添加到 HTML 文件中
+    <script src="/path/to/script.js"></script>
+
+
+    如果设置了 src 特性，script 标签内容将会被忽略。
+    一个单独的 <script> 标签不能同时有 src 特性和内部包裹的代码。
+
+    这将不会工作：
+    <script src="file.js">
+      alert(1); // 此内容会被忽略，因为设定了 src
+    </script>
+    我们必须进行选择，要么使用外部的 <script src="…">，要么使用正常包裹代码的 <script>。
+
+    为了让上面的例子工作，我们可以将它分成两个 <script> 标签。
+    <script src="file.js"></script>
+    <script>
+      alert(1);
+    </script>
+
+    
+    总结
+    我们可以使用一个 <script> 标签将 JavaScript 代码添加到页面中。
+    type 和 language 特性（attribute）不是必需的。
+    外部的脚本可以通过 <script src="path/to/script.js"></script> 的方式插入
+     -->
+
+<!DOCTYPE HTML>
+<html>
+
+<body>
+
+  <p>script 标签之前...</p>
+
+  <script>
+    alert('Hello, world!');
+  </script>
+
+  <p>...script 标签之后</p>
+
+</body>
+
+</html>
