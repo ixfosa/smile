@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        "use strict";
+        let user = {
+            name: "ixfosa",
+            age: 22,
+            [Symbol.toPrimitive]: function(hint) {
+                alert(`hint: ${hint}`);
+
+                return hint == "string" ? `name: ${this.name}` : this.age;
+            }
+        };
+
+        // 根据转换的不同，user 变成一个自描述字符串或者一个数值。
+        // 单个方法 user[Symbol.toPrimitive] 处理了所有的转换情况。
+        // alert(user);  // hint: string, name: ixfosa
+        // alert(+user);  // hint: number, 22
+        // alert(user + 1); // hint: default, 23
+
+
+
+
+
+
+    // toString/valueOf
+        //- 方法 toString 和 valueOf 来自上古时代。它们不是 symbol（那时候还没有 symbol 这个概念），
+        //- 而是“常规的”字符串命名的方法。它们提供了一种可选的“老派”的实现转换的方法。
+
+        //- 如果没有 Symbol.toPrimitive，那么 JavaScript 将尝试找到它们，并且按照下面的顺序进行尝试：
+            //- 对于 “string” hint，toString -> valueOf。
+            //- 其他情况，valueOf -> toString。
+            //- 这些方法必须返回一个原始值。如果 toString 或 valueOf 返回了一个对象，
+            //- 那么返回值会被忽略（和这里没有方法的时候相同）。
+
+        //- 默认情况下，普通对象具有 toString 和 valueOf 方法：
+
+        //- toString 方法返回一个字符串 "[object Object]"。
+        //- valueOf 方法返回对象自身。
+        let user2 = {
+            name: "ixfosa",
+            age: 22,
+        };
+        // alert(user2); // [object Object]
+        // alert(user2.valueOf() === user2); // true
+
+        // 所以，如果我们尝试将一个对象当做字符串来使用，
+        // 例如在 alert 中，那么在默认情况下我们会看到 [object Object]。
+
+        // 这里提到默认值 valueOf 只是为了完整起见，以避免混淆。
+        // valueOf, 它返回对象本身，因此被忽略。那是历史原因。所以我们可以假设它根本就不存在。
+
+
+        // 例如，这里的 user 执行和前面提到的那个 user 一样的操作，
+        // 使用 toString 和 valueOf 的组合（而不是 Symbol.toPrimitive）：
+        let user3 = {
+            name: "ixfosa",
+            age: 22,
+            toString() {
+                return `name: ${this.name}`;
+            },
+
+            valueOf() {
+                return this.age;
+            }
+        };
+
+        // 执行的动作和前面使用 Symbol.toPrimitive 的那个例子相同。
+        // alert(user3); // name: ixfosa
+        // alert(user3 + 1); // 23
+    
+        // 通常我们希望有一个“全能”的地方来处理所有原始转换。在这种情况下，我们可以只实现 toString，就像这样：
+        let user4 = {
+            name: "ixfosa",
+            toString() {
+                return this.name;
+            },
+        };
+        // 如果没有 Symbol.toPrimitive 和 valueOf，toString 将处理所有原始转换。
+        // alert(user4); // ixfosa
+        // alert(+user4); // NaN
+        // alert(user4 + 66); //ixfosa66
+
+
+
+
+
+        // 进一步的转换
+            //- 许多运算符和函数执行类型转换，例如乘法 * 将操作数转换为数字。
+
+            //- 如果我们将对象作为参数传递，则会出现两个阶段：
+                //- 对象被转换为原始值（通过前面我们描述的规则）。
+                //- 如果生成的原始值的类型不正确，则继续进行转换。
+        
+        // toString 在没有其他方法的情况下处理所有转换
+        let obj = {
+            toString() {
+                return "2";
+            },
+        };
+
+        // 乘法 obj * 3 首先将对象转换为原始值（字符串 “2”）。
+        // 之后 "2" * 3 变为 2 * 3（字符串被转换为数字）。
+        alert(obj * 3); // 6
+        
+        // 二元加法在同样的情况下会将其连接成字符串，因为它更愿意接受字符串：
+        alert(obj + 3); // 23
+
+        
+    </script>
+</body>
+</html>
