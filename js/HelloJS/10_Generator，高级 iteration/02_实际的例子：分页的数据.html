@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        // 目前，有很多在线服务都是发送的分页的数据（paginated data）。
+        // 例如，当我们需要一个用户列表时，一个请求只返回一个预设数量的用户（例如 100 个用户）——
+            //  “一页”，并提供了指向下一页的 URL。
+
+        // 这种模式非常常见。不仅可用于获取用户列表，这种模式还可以用于任意东西。
+
+        // 例如，GitHub 允许使用相同的分页提交（paginated fashion）的方式找回 commit：
+            //- 我们应该以 https://api.github.com/repos/<repo>/commits 格式创建进行 fetch 的网络请求。
+            //- 它返回一个包含 30 条 commit 的 JSON，并在返回的 Link header 中提供了指向下一页的链接。
+            //- 然后我们可以将该链接用于下一个请求，以获取更多 commit，以此类推。
+
+        // 对于我们的代码，我们希望有一种更简单的获取 commit 的方式。
+
+        // 让我们创建一个函数 fetchCommits(repo)，用来在任何我们有需要的时候发出请求，来为我们获取 commit。
+        // 并且，该函数能够关注到所有分页内容。对于我们来说，它将是一个简单的 for await..of 异步迭代。
+
+
+        // 因此，其用法将如下所示：
+            // for await (let commit of fetchCommits("username/repository")) {
+            //   // 处理 commit
+            // }
+
+
+        //  通过异步 generator，我们可以轻松实现上面所描述的函数，如下所示：
+        async function* fetchCommits(repo) {
+            let url = `https://api.github.com/repos/${repo}/commits`;
+
+            while (true){
+                const response = await fetch(url, { // (1)
+                    headers: {'User-Agent': 'Our script'}, // github 需要任意的 user-agent header
+                });
+                
+                const body = await response.json(); // (2) 响应的是 JSON（array of commits）
+
+                // (3) 前往下一页的 URL 在 header 中，提取它
+                let nextPage = response.headers.get('Link').match(/<(.*?)>; rel="next"/);
+                nextPage = nextPage?.[1];
+
+                url = nextPage;
+
+                for(let commit of body) { // (4) 一个接一个地 yield commit，直到最后一页
+                    yield commit;
+                }
+            }
+        }
+        
+        // 关于其工作原理的进一步解释：
+
+            // 1. 我们使用浏览器的 fetch 方法来下载 commit。
+                //- 初始 URL 是 https://api.github.com/repos/<repo>/commits，并且下一页的 URL 将在响应的 Link header 中。
+                //- fetch 方法允许我们提供授权和其他 header，如果需要 —— 这里 GitHub 需要的是 User-Agent。
+            
+            // 2. commit 被以 JSON 的格式返回。
+
+            // 3. 我们应该从响应（response）的 Link header 中获取前往下一页的 URL。
+            // 它有一个特殊的格式，所以我们对它使用正则表达式
+                //- 前往下一页的 URL 看起来可能就像这样
+                //-  https://api.github.com/repositories/93253246/commits?page=2。这是由 GitHub 自己生成的。
+
+            // 4. 然后，我们将接收到的所有 commit 一个一个地 yield 出来，当所有 commit 都 yield 完成时，
+            // 将触发下一个 while(url) 迭代，并发出下一个请求。
+
+            // 这是一个使用示例（在控制台中显示 commit 的作者）
+            (async () => {
+                let count = 0;
+                for await (const commit of fetchCommits('javascript-tutorial/en.javascript.info')) {
+                    console.log(commit.author.login);
+                    if (++count == 100) { // 让我们在获取了 100 个 commit 时停止
+                        break;
+                    }
+                }
+            })();
+
+            // 从外部看不到分页请求（paginated requests）的内部机制。
+            // 对我们来说，它只是一个返回 commit 的异步 generator。
+    </script>
+</body>
+</html>
